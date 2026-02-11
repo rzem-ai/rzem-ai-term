@@ -1,0 +1,27 @@
+# rzem-ai-term session tracking service
+#
+# This is a template unit that runs per-user to track active
+# rzem-ai-term sessions. It is started automatically on SSH login
+# when rzem-ai-term is configured as the login shell.
+#
+# Install to: /etc/systemd/system/rzem-ai-term@.service
+# Enable for a user: systemctl enable rzem-ai-term@<username>
+
+[Unit]
+Description=rzem-ai-term session manager for %i
+After=network.target sshd.service
+Documentation=https://github.com/rzem-ai/rzem-ai-term
+
+[Service]
+Type=simple
+User=%i
+Environment=RZEM_AI_TERM_SERVICE=1
+ExecStart=/usr/local/bin/rzem-ai-term-daemon
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rzem-ai-term
+
+[Install]
+WantedBy=multi-user.target

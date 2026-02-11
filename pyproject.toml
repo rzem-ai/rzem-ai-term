@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rzem-ai-term"
+version = "0.1.0"
+description = "A tabbed TUI terminal application designed to be used as an SSH login shell"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = [
+    "textual>=1.0.0",
+    "pyte>=0.8.1",
+]
+
+[project.scripts]
+rzem-ai-term = "rzem_ai_term.app:main"
+rzem-ai-term-shell = "rzem_ai_term.shell:main"
+rzem-ai-term-daemon = "rzem_ai_term.daemon:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rzem_ai_term"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/rzem_ai_term"]
