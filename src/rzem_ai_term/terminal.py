@@ -31,7 +31,7 @@ _PYTE_COLORS = {
     "magenta": "magenta",
     "cyan": "cyan",
     "white": "white",
-    "default": "default",
+    "default": None,
 }
 
 
@@ -46,7 +46,7 @@ def _pyte_char_to_style(char: pyte.screens.Char) -> Style:
         italic=char.italics,
         underline=char.underscore,
         reverse=char.reverse,
-        strikethrough=char.strikethrough,
+        strike=char.strikethrough,
     )
 
 
