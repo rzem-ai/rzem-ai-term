@@ -35,10 +35,22 @@ _PYTE_COLORS = {
 }
 
 
+def _resolve_color(color: str) -> str | None:
+    """Convert a pyte color value to a Rich-compatible color string."""
+    mapped = _PYTE_COLORS.get(color)
+    if mapped is not None or color == "default":
+        return mapped
+    # Pyte returns hex colors without '#' prefix (e.g. "0178d4")
+    # Rich requires the '#' prefix for hex colors
+    if len(color) == 6 and all(c in "0123456789abcdefABCDEF" for c in color):
+        return f"#{color}"
+    return color
+
+
 def _pyte_char_to_style(char: pyte.screens.Char) -> Style:
     """Convert a pyte character's attributes to a Rich Style."""
-    fg = _PYTE_COLORS.get(char.fg, char.fg if char.fg != "default" else None)
-    bg = _PYTE_COLORS.get(char.bg, char.bg if char.bg != "default" else None)
+    fg = _resolve_color(char.fg)
+    bg = _resolve_color(char.bg)
     return Style(
         color=fg,
         bgcolor=bg,
