@@ -77,19 +77,24 @@ setup_user() {
         exit 1
     fi
 
-    # Save the user's current shell
+    # Save the user's current shell (only if not already configured,
+    # so re-running --setup doesn't overwrite the real original shell
+    # with rzem-ai-term-shell itself)
     local current_shell
     current_shell="$(getent passwd "${target_user}" | cut -d: -f7)"
     info "User's current shell: ${current_shell}"
 
-    # Save it for the TUI to use
     local config_dir
     config_dir="$(eval echo "~${target_user}")/.config/rzem-ai-term"
     mkdir -p "${config_dir}"
-    echo "${current_shell}" > "${config_dir}/shell"
-    chown -R "${target_user}:" "${config_dir}"
 
-    info "Saved original shell to ${config_dir}/shell"
+    if [[ -f "${config_dir}/shell" ]]; then
+        info "Original shell already saved in ${config_dir}/shell, not overwriting"
+    else
+        echo "${current_shell}" > "${config_dir}/shell"
+        info "Saved original shell to ${config_dir}/shell"
+    fi
+    chown -R "${target_user}:" "${config_dir}"
 
     # Change the user's shell
     chsh -s "${INSTALL_PREFIX}/bin/rzem-ai-term-shell" "${target_user}"
@@ -118,15 +123,27 @@ uninstall_user() {
     # Restore original shell
     local config_dir
     config_dir="$(eval echo "~${target_user}")/.config/rzem-ai-term"
+    local original_shell=""
     if [[ -f "${config_dir}/shell" ]]; then
-        local original_shell
         original_shell="$(cat "${config_dir}/shell")"
-        chsh -s "${original_shell}" "${target_user}"
-        info "Restored shell to ${original_shell} for '${target_user}'"
-    else
-        chsh -s /bin/bash "${target_user}"
-        warn "No saved shell found, defaulted to /bin/bash"
     fi
+
+    # Guard against a corrupted save where rzem-ai-term-shell was saved
+    # as the "original" (e.g. --setup was run twice before this fix)
+    if [[ -z "${original_shell}" || "${original_shell}" == *"rzem-ai-term"* ]]; then
+        original_shell="/bin/bash"
+        if [[ -f "${config_dir}/shell" ]]; then
+            warn "Saved shell '$(cat "${config_dir}/shell")' looks like rzem-ai-term itself, falling back to /bin/bash"
+        else
+            warn "No saved shell found, defaulting to /bin/bash"
+        fi
+    fi
+
+    chsh -s "${original_shell}" "${target_user}"
+    info "Restored shell to ${original_shell} for '${target_user}'"
+
+    # Clean up the saved config so a future --setup starts fresh
+    rm -f "${config_dir}/shell"
 
     # Stop and disable daemon
     systemctl stop "rzem-ai-term@${target_user}" 2>/dev/null || true
